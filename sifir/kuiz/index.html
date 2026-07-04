@@ -255,10 +255,53 @@ h1,h2,.badge-name,.q-text,.rank-title{font-family:'Baloo 2',cursive}
    ============================================================ */
 const API_URL = "https://script.google.com/macros/s/AKfycbxCdbHQghBzmHlcctShkE6WPnnVrC2GDv1WLTjur5PlNmgYe5d7KLPiuDKiBv57oeI/exec";
 
-/* Berapa jauh sifir dibaca (n×1 hingga n×MAX). Ubah jika perlu. */
-const MULTIPLIER_MAX = 12;
+/* Sifir yang diuji: 1 hingga MULTIPLIER_MAX sahaja (ikut skop hafalan sekolah). */
+const MULTIPLIER_MAX = 9;
 const SOALAN = 10;                 // bilangan soalan setiap kuiz
 const TIER2_MASA = 180;            // saat (3 minit)
+
+/* Awalan nama yang BUKAN nama panggilan (guna nama seterusnya jika ada) */
+const AWALAN_BUKAN_PANGGILAN = ["MUHAMAD","MUHAMMAD","MOHAMAD","MOHAMMAD","MOHD","MUHD","NUR","NURUL"];
+/* Perkataan yang menandakan tamat bahagian "nama diri" (selepas ini ialah nama bapa/keluarga) */
+const PEMISAH_NAMA = ["BIN","BINTI","A/L","A/P","ANAK"];
+
+const UCAP_TIER1 = [
+  n => `${n}, hebat! Sifir {sifir} dah dikuasai! 🎉`,
+  n => `Wah ${n}, bukan biasa-biasa awak ni! Teruskan usaha!`,
+  n => `${n} power! 10/10 sifir {sifir}! 🥇`,
+  n => `Tahniah ${n}! Satu lagi sifir berjaya dikuasai!`,
+  n => `${n}, bagus sangat! Jom cuba Tier 2 pula!`
+];
+const UCAP_TIER2 = [
+  n => `${n}, MASTER SIFIR {sifir}! Luar biasa! 💎`,
+  n => `Wah ${n}!! Lulus dalam masa terhad — sungguh hebat!`,
+  n => `${n} juara sifir {sifir}! Hafalan anda memang mantap!`,
+  n => `Tahniah ${n}! Anda kini rank MASTER untuk sifir {sifir}! 💎🔥`,
+  n => `${n}, ini level pro! Teruskan cemerlang!`
+];
+
+/* Cari nama panggilan yang sesuai daripada nama penuh */
+function namaPanggilan(namaPenuh){
+  if(!namaPenuh) return "";
+  const parts = String(namaPenuh).trim().split(/\s+/).filter(Boolean);
+  if(parts.length === 0) return "";
+  // cari kedudukan perkataan pemisah (BIN/BINTI/A-L/A-P) - nama diri ialah sebelum ini
+  let hadNamaDiri = parts.length;
+  for(let i=0;i<parts.length;i++){
+    if(PEMISAH_NAMA.includes(parts[i].toUpperCase())){ hadNamaDiri = i; break; }
+  }
+  const namaDiri = parts.slice(0, hadNamaDiri);
+  if(namaDiri.length === 0) return titleCase(parts[0]);
+  const pertama = namaDiri[0].toUpperCase();
+  if(AWALAN_BUKAN_PANGGILAN.includes(pertama) && namaDiri.length > 1){
+    return titleCase(namaDiri[1]);
+  }
+  return titleCase(namaDiri[0]);
+}
+function titleCase(w){
+  w = String(w).toLowerCase();
+  return w.charAt(0).toUpperCase() + w.slice(1);
+}
 
 const RANK = [
   {nama:"Belum Lulus", ikon:""},
@@ -373,9 +416,13 @@ function pilihTier(s){
 function janaSoalan(sifir){
   const pool = [];
   for(let m=1;m<=MULTIPLIER_MAX;m++) pool.push(m);
-  // kocok
+  // kocok supaya susunan 1-9 rawak
   for(let i=pool.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [pool[i],pool[j]]=[pool[j],pool[i]]; }
-  return pool.slice(0,SOALAN).map(m=>({a:sifir,b:m,jwb:sifir*m}));
+  const soalan = pool.map(m=>({a:sifir,b:m,jwb:sifir*m}));
+  // soalan ke-10: ulang salah satu nombor 1-MULTIPLIER_MAX secara rawak
+  const ulang = 1 + Math.floor(Math.random()*MULTIPLIER_MAX);
+  soalan.push({a:sifir, b:ulang, jwb:sifir*ulang});
+  return soalan.slice(0, SOALAN);
 }
 function mulaKuiz(tier){
   quiz = {
@@ -473,11 +520,15 @@ function paparResult(lulus, sebabMasa, naik){
   badge.innerHTML="";
   if(lulus){
     const r = RANK[quiz.tier];
+    const panggilan = namaPanggilan(murid.nama);
+    const senarai = quiz.tier===2 ? UCAP_TIER2 : UCAP_TIER1;
+    const pilih = senarai[Math.floor(Math.random()*senarai.length)];
+    const ucapan = pilih(panggilan).replace("{sifir}", quiz.sifir);
     em.textContent = "🎉";
     badge.innerHTML = `<div class="rank-badge ${r.cls}">${r.ikon}</div>
                        <div class="rank-title ${r.cls}">${r.nama}</div>`;
     title.textContent = naik ? "Tahniah! Rank Naik!" : "Hebat! 10/10!";
-    msg.textContent = `Sifir ${quiz.sifir} — anda jawab semua dengan betul!`;
+    msg.textContent = ucapan;
     retry.style.display="none";
     confetti();
   } else {
