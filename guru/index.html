@@ -1,1 +1,350 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Cikgu — Jaguh Sifir 4 Ruby</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F3F0FF; --ink:#2B2358; --muted:#7A72A8;
+  --primary:#6C4DF4; --primary-dark:#5438D6;
+  --gold:#F5B301; --gold-deep:#D99700;
+  --diamond:#38D6E8; --diamond-deep:#0FA8C4;
+  --bad:#EF4444; --card:#FFFFFF; --line:#E4DFFA;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:'Nunito',sans-serif;color:var(--ink);background:var(--bg);
+  background-image:radial-gradient(circle at 15% 10%,#E6DEFF 0,transparent 30%),
+                   radial-gradient(circle at 85% 90%,#DFF6FF 0,transparent 30%);min-height:100vh}
+.wrap{max-width:1000px;margin:0 auto;padding:20px 14px 60px}
+h1,h2{font-family:'Baloo 2',cursive}
+.logo{text-align:center;margin:14px 0}
+.logo h1{font-size:1.9rem;color:var(--primary)}
+.logo p{color:var(--muted);font-weight:700}
+.card{background:var(--card);border:2px solid var(--line);border-radius:20px;padding:20px;box-shadow:0 6px 0 var(--line)}
+.screen{display:none}.screen.active{display:block;animation:pop .3s ease}
+@keyframes pop{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important}}
 
+/* login */
+.login-box{max-width:380px;margin:30px auto}
+.login-box label{font-weight:800;display:block;margin-bottom:8px;text-align:center}
+.login-box input{width:100%;font-size:1.2rem;padding:14px;border:2px solid var(--line);
+  border-radius:14px;text-align:center;font-family:'Baloo 2',cursive;margin-bottom:12px}
+.login-box input:focus{outline:none;border-color:var(--primary)}
+.err{color:var(--bad);font-weight:800;text-align:center;min-height:22px;margin-bottom:6px}
+.btn{width:100%;font-family:'Baloo 2',cursive;font-size:1.1rem;font-weight:700;padding:14px;
+  border-radius:14px;border:0;cursor:pointer;background:var(--primary);color:#fff;
+  box-shadow:0 5px 0 var(--primary-dark);transition:transform .05s}
+.btn:active{transform:translateY(3px);box-shadow:0 2px 0 var(--primary-dark)}
+.btn:disabled{opacity:.5}
+
+/* stats */
+.stat-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.stat{flex:1;min-width:130px;background:#fff;border:2px solid var(--line);border-radius:16px;
+  padding:14px;text-align:center;box-shadow:0 4px 0 var(--line)}
+.stat .big{font-family:'Baloo 2',cursive;font-size:2rem;font-weight:800;color:var(--primary)}
+.stat .lbl{color:var(--muted);font-weight:700;font-size:.85rem}
+
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.toolbar input{flex:1;min-width:160px;padding:11px 14px;border:2px solid var(--line);
+  border-radius:12px;font-family:'Nunito';font-weight:700;font-size:.95rem}
+.toolbar input:focus{outline:none;border-color:var(--primary)}
+.tab-btns{display:flex;gap:8px;flex-wrap:wrap}
+.tab-btns button{font-family:'Baloo 2',cursive;font-weight:700;font-size:.9rem;padding:9px 16px;
+  border-radius:12px;border:2px solid var(--line);background:#fff;color:var(--muted);cursor:pointer}
+.tab-btns button.on{background:var(--primary);color:#fff;border-color:var(--primary-dark)}
+
+.view{display:none}.view.on{display:block}
+
+/* grid table */
+.tablewrap{overflow-x:auto;border-radius:16px;border:2px solid var(--line)}
+table{border-collapse:collapse;width:100%;background:#fff;font-size:.9rem}
+th,td{padding:9px 6px;text-align:center;border-bottom:1px solid var(--line);white-space:nowrap}
+th{background:#F3F0FF;font-family:'Baloo 2',cursive;font-weight:700;position:sticky;top:0}
+td.nama{text-align:left;font-weight:800;position:sticky;left:0;background:#fff;
+  border-right:1px solid var(--line);max-width:150px;overflow:hidden;text-overflow:ellipsis}
+th.nama-h{text-align:left;position:sticky;left:0;z-index:2}
+.cell{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;
+  border-radius:8px;font-weight:800;font-size:.82rem}
+.c0{background:#F0EEF9;color:#B9B2DE}
+.c1{background:#FFF3D0;color:var(--gold-deep)}
+.c2{background:#D8F8FE;color:var(--diamond-deep)}
+.rowtot{font-weight:800;color:var(--primary)}
+
+/* summary bars */
+.sumbar{margin-bottom:12px}
+.sumbar .top{display:flex;justify-content:space-between;font-weight:800;margin-bottom:5px}
+.sumbar .top .s{color:var(--muted)}
+.track{height:22px;background:#EDEAFB;border-radius:99px;overflow:hidden;display:flex}
+.track .fill-g{background:linear-gradient(90deg,#F5B301,#FFD966);height:100%}
+.track .fill-d{background:linear-gradient(90deg,#0FA8C4,#38D6E8);height:100%}
+
+/* ketinggalan list */
+.miss{display:flex;align-items:center;gap:12px;padding:12px 14px;border:2px solid var(--line);
+  border-radius:14px;margin-bottom:10px;background:#fff}
+.miss .nm{font-weight:800;flex:1}
+.miss .cnt{font-family:'Baloo 2',cursive;font-weight:800;color:var(--bad)}
+.miss .dots{display:flex;gap:3px;flex-wrap:wrap;max-width:180px}
+.dot{width:16px;height:16px;border-radius:5px;font-size:.6rem;display:flex;align-items:center;
+  justify-content:center;font-weight:800}
+.dot.d0{background:#FDE2E2;color:var(--bad)}
+.dot.d1{background:#FFF3D0;color:var(--gold-deep)}
+.dot.d2{background:#D8F8FE;color:var(--diamond-deep)}
+.alldone{text-align:center;padding:30px;color:var(--muted);font-weight:800}
+
+.legend{display:flex;gap:16px;justify-content:center;margin-top:16px;flex-wrap:wrap;
+  color:var(--muted);font-weight:800;font-size:.82rem}
+.legend span{display:flex;align-items:center;gap:6px}
+.legend .sw{width:16px;height:16px;border-radius:5px;display:inline-block}
+.loading{text-align:center;color:var(--muted);font-weight:800;padding:30px}
+.spin{width:36px;height:36px;border:5px solid var(--line);border-top-color:var(--primary);
+  border-radius:50%;margin:0 auto 12px;animation:sp 1s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.topbar .keluar{background:none;border:0;color:var(--muted);font-weight:800;cursor:pointer;text-decoration:underline}
+.refresh{background:#fff;border:2px solid var(--line);border-radius:12px;padding:8px 14px;
+  font-weight:800;color:var(--primary);cursor:pointer;font-family:'Baloo 2',cursive}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="logo">
+    <h1>📊 Dashboard Cikgu</h1>
+    <p>Jaguh Sifir</p>
+  </div>
+
+  <!-- LOGIN -->
+  <section id="scr-login" class="screen active">
+    <div class="card login-box">
+      <label>Kata Laluan Cikgu</label>
+      <input type="password" id="pass" placeholder="••••••" autocomplete="off">
+      <div class="err" id="loginErr"></div>
+      <button class="btn" id="loginBtn" onclick="masuk()">Masuk</button>
+    </div>
+  </section>
+
+  <!-- LOADING -->
+  <section id="scr-load" class="screen">
+    <div class="card loading"><div class="spin"></div><span>Memuatkan data murid...</span></div>
+  </section>
+
+  <!-- DASHBOARD -->
+  <section id="scr-dash" class="screen">
+    <div class="topbar">
+      <select id="pilihKelas" onchange="tukarKelas()" style="font-family:'Baloo 2',cursive;font-weight:700;font-size:1rem;padding:9px 14px;border:2px solid var(--line);border-radius:12px;background:#fff;color:var(--primary);cursor:pointer">
+      </select>
+      <div style="display:flex;gap:10px;align-items:center">
+        <button class="refresh" onclick="muatData()">🔄 Muat Semula</button>
+        <button class="keluar" onclick="keluar()">Keluar</button>
+      </div>
+    </div>
+
+    <div class="stat-row" id="statRow"></div>
+
+    <div class="toolbar">
+      <input type="text" id="cari" placeholder="🔍 Cari nama murid..." oninput="render()">
+    </div>
+    <div class="tab-btns">
+      <button class="on" data-v="grid" onclick="tukar('grid')">Grid Penuh</button>
+      <button data-v="ringkas" onclick="tukar('ringkas')">Ringkasan</button>
+      <button data-v="tinggal" onclick="tukar('tinggal')">Ketinggalan</button>
+    </div>
+    <br>
+
+    <!-- GRID -->
+    <div class="view on" id="v-grid">
+      <div class="tablewrap"><table id="gridTable"></table></div>
+      <div class="legend">
+        <span><i class="sw c0" style="width:16px;height:16px;border-radius:5px"></i> Belum</span>
+        <span><i class="sw" style="background:#FFF3D0"></i> 🥇 Pro</span>
+        <span><i class="sw" style="background:#D8F8FE"></i> 💎 Master</span>
+      </div>
+    </div>
+
+    <!-- RINGKASAN -->
+    <div class="view" id="v-ringkas">
+      <div class="card" id="ringkasBox"></div>
+    </div>
+
+    <!-- KETINGGALAN -->
+    <div class="view" id="v-tinggal">
+      <div id="tinggalBox"></div>
+    </div>
+  </section>
+</div>
+
+<script>
+const API_URL = "https://script.google.com/macros/s/AKfycbxCdbHQghBzmHlcctShkE6WPnnVrC2GDv1WLTjur5PlNmgYe5d7KLPiuDKiBv57oeI/exec";
+
+let DATA = null;
+let viewNow = "grid";
+
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+document.getElementById('pass').addEventListener('keydown',e=>{ if(e.key==="Enter") masuk(); });
+
+let passSimpan = "";
+let kelasNow = "";
+function masuk(){
+  const p = document.getElementById('pass').value.trim();
+  if(!p){ document.getElementById('loginErr').textContent="Sila masukkan kata laluan."; return; }
+  passSimpan = p;
+  kelasNow = "";        // guna default kelas pertama pada kali pertama
+  muatData();
+}
+function keluar(){ passSimpan=""; DATA=null; kelasNow=""; document.getElementById('pass').value=""; show('scr-login'); }
+
+function tukarKelas(){
+  kelasNow = document.getElementById('pilihKelas').value;
+  muatData();
+}
+
+function muatData(){
+  show('scr-load');
+  let url = API_URL + "?action=guru&pass=" + encodeURIComponent(passSimpan);
+  if(kelasNow) url += "&kelas=" + encodeURIComponent(kelasNow);
+  fetch(url)
+    .then(r=>r.json())
+    .then(res=>{
+      if(!res.ok){
+        show('scr-login');
+        document.getElementById('loginErr').textContent = res.msg || "Gagal.";
+        return;
+      }
+      DATA = res;
+      kelasNow = res.kelas;
+      // isi dropdown kelas (sekali sahaja / kemas kini)
+      const sel = document.getElementById('pilihKelas');
+      if(res.senaraiKelas){
+        sel.innerHTML = "";
+        res.senaraiKelas.forEach(k=>{
+          const o = document.createElement('option');
+          o.value = k; o.textContent = "Kelas " + k;
+          if(k===res.kelas) o.selected = true;
+          sel.appendChild(o);
+        });
+      }
+      render();
+      show('scr-dash');
+    })
+    .catch(()=>{
+      show('scr-login');
+      document.getElementById('loginErr').textContent = "Masalah sambungan. Cuba lagi.";
+    });
+}
+
+function tukar(v){
+  viewNow = v;
+  document.querySelectorAll('.tab-btns button').forEach(b=>b.classList.toggle('on', b.dataset.v===v));
+  document.querySelectorAll('.view').forEach(el=>el.classList.remove('on'));
+  document.getElementById('v-'+v).classList.add('on');
+  render();
+}
+
+function render(){
+  if(!DATA) return;
+  renderStats();
+  if(viewNow==="grid") renderGrid();
+  if(viewNow==="ringkas") renderRingkas();
+  if(viewNow==="tinggal") renderTinggal();
+}
+
+function renderStats(){
+  const jum = DATA.jumlah;
+  // murid yang lulus semua 9 sifir (rank>=1 semua)
+  let siapSemua = 0, totalBintang = 0, maxBintang = jum*9;
+  DATA.murid.forEach(m=>{
+    if(m.ranks.every(r=>r>=1)) siapSemua++;
+    totalBintang += m.ranks.filter(r=>r>=1).length;
+  });
+  const peratus = maxBintang? Math.round(totalBintang/maxBintang*100):0;
+  document.getElementById('statRow').innerHTML = `
+    <div class="stat"><div class="big">${jum}</div><div class="lbl">Jumlah Murid</div></div>
+    <div class="stat"><div class="big">${siapSemua}</div><div class="lbl">Lulus Semua Sifir</div></div>
+    <div class="stat"><div class="big">${peratus}%</div><div class="lbl">Kemajuan Kelas</div></div>`;
+}
+
+function carianFilter(){
+  const q = (document.getElementById('cari').value||"").toLowerCase().trim();
+  if(!q) return DATA.murid;
+  return DATA.murid.filter(m=>m.nama.toLowerCase().includes(q));
+}
+
+function renderGrid(){
+  const list = carianFilter();
+  let h = "<thead><tr><th class='nama-h'>Nama</th>";
+  for(let s=1;s<=9;s++) h += `<th>${s}</th>`;
+  h += "<th>Jum</th></tr></thead><tbody>";
+  list.forEach(m=>{
+    h += `<tr><td class="nama">${esc(m.nama)}</td>`;
+    let lulus=0;
+    m.ranks.forEach(r=>{
+      const rr = Math.min(r,2);
+      if(r>=1) lulus++;
+      const ic = rr===2?"💎":rr===1?"🥇":"";
+      h += `<td><span class="cell c${rr}">${ic||"–"}</span></td>`;
+    });
+    h += `<td class="rowtot">${lulus}/9</td></tr>`;
+  });
+  h += "</tbody>";
+  if(list.length===0) h = "<tbody><tr><td style='padding:24px;color:#7A72A8;font-weight:800'>Tiada murid dijumpai.</td></tr></tbody>";
+  document.getElementById('gridTable').innerHTML = h;
+}
+
+function renderRingkas(){
+  let h = "<h2 style='margin-bottom:14px'>Bilangan Murid Lulus Setiap Sifir</h2>";
+  const jum = DATA.jumlah;
+  for(let s=0;s<9;s++){
+    const pro = DATA.lulusSifir[s];      // rank>=1
+    const mas = DATA.masterSifir[s];     // rank>=2
+    const proOnly = pro - mas;
+    const pctP = jum? (proOnly/jum*100):0;
+    const pctM = jum? (mas/jum*100):0;
+    h += `<div class="sumbar">
+      <div class="top"><span>Sifir ${s+1}</span><span class="s">${pro}/${jum} lulus &nbsp;·&nbsp; 💎 ${mas}</span></div>
+      <div class="track">
+        <div class="fill-d" style="width:${pctM}%"></div>
+        <div class="fill-g" style="width:${pctP}%"></div>
+      </div></div>`;
+  }
+  h += `<div class="legend">
+    <span><i class="sw" style="background:#38D6E8"></i> Master 💎</span>
+    <span><i class="sw" style="background:#F5B301"></i> Pro 🥇</span></div>`;
+  document.getElementById('ringkasBox').innerHTML = h;
+}
+
+function renderTinggal(){
+  // murid dengan sifir belum lulus (rank 0), disusun paling banyak tertinggal dahulu
+  const list = carianFilter()
+    .map(m=>({nama:m.nama, ranks:m.ranks, belum:m.ranks.filter(r=>r<1).length}))
+    .filter(m=>m.belum>0)
+    .sort((a,b)=>b.belum-a.belum);
+  let h = "";
+  if(list.length===0){
+    h = "<div class='alldone card'>🎉 Semua murid telah lulus sekurang-kurangnya Tier 1 untuk setiap sifir. Hebat!</div>";
+  } else {
+    list.forEach(m=>{
+      let dots = "";
+      m.ranks.forEach((r,i)=>{
+        const rr=Math.min(r,2);
+        dots += `<span class="dot d${rr}" title="Sifir ${i+1}">${i+1}</span>`;
+      });
+      h += `<div class="miss">
+        <div class="nm">${esc(m.nama)}</div>
+        <div class="dots">${dots}</div>
+        <div class="cnt">${m.belum} belum</div>
+      </div>`;
+    });
+  }
+  document.getElementById('tinggalBox').innerHTML = h;
+}
+
+function esc(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+</script>
+</body>
+</html>
