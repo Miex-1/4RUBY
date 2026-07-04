@@ -275,11 +275,14 @@ function carianFilter(){
   return DATA.murid.filter(m=>m.nama.toLowerCase().includes(q));
 }
 
+const PANGKAT_IKON = {"Grandmaster":"👑","Epic":"🔥","Legend":"⚡","Mythic":"🌟"};
+function fmtMasa(s){ if(!s) return "–"; const m=Math.floor(s/60),d=s%60; return m+":"+String(d).padStart(2,"0"); }
+
 function renderGrid(){
   const list = carianFilter();
   let h = "<thead><tr><th class='nama-h'>Nama</th>";
   for(let s=1;s<=9;s++) h += `<th>${s}</th>`;
-  h += "<th>Jum</th></tr></thead><tbody>";
+  h += "<th>Jum</th><th>⭐</th><th>Jaguh</th><th>Rekod</th></tr></thead><tbody>";
   list.forEach(m=>{
     h += `<tr><td class="nama">${esc(m.nama)}</td>`;
     let lulus=0;
@@ -289,7 +292,11 @@ function renderGrid(){
       const ic = rr===2?"💎":rr===1?"🥇":"";
       h += `<td><span class="cell c${rr}">${ic||"–"}</span></td>`;
     });
-    h += `<td class="rowtot">${lulus}/9</td></tr>`;
+    const pangkat = m.cabaranRank ? (PANGKAT_IKON[m.cabaranRank]||"")+" "+m.cabaranRank : "–";
+    h += `<td class="rowtot">${lulus}/9</td>`;
+    h += `<td style="font-weight:800;color:var(--gold-deep)">${m.point||0}</td>`;
+    h += `<td style="font-weight:800;font-size:.82rem">${pangkat}</td>`;
+    h += `<td style="font-weight:700;color:var(--muted)">${fmtMasa(m.cabaranMasa)}</td></tr>`;
   });
   h += "</tbody>";
   if(list.length===0) h = "<tbody><tr><td style='padding:24px;color:#7A72A8;font-weight:800'>Tiada murid dijumpai.</td></tr></tbody>";
